@@ -49,6 +49,7 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 //Start Receiver Activity
                 Intent recIntent = new Intent();
+                recIntent.putExtra("ID","NORMAL");
                 recIntent.setClass(getApplicationContext(), Receiver.class);
                 startActivity(recIntent);
             }

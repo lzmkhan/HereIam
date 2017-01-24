@@ -5,11 +5,15 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.FragmentManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -18,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
@@ -67,6 +72,14 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
             {
                 //display a dialogue get alias/id then send the generated id to that particular alias/id
                 //start updating the geocodes in the firebase db for that current id
+                DialogFragment dialog = new customDialog();
+                Bundle args = new Bundle();
+                args.putString("ID",ID);
+                args.putString("MODE","BEACON");
+                dialog.setArguments(args);
+                FragmentManager managerFrag = getFragmentManager();
+                managerFrag.beginTransaction();
+                dialog.show(managerFrag,"sendid");
 
 
             }
@@ -160,19 +173,58 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
     }
 
     public static class customDialog extends DialogFragment{
+        String mode,message;
+        String idToBeSent;
+        RadioButton rb1, rb2;
+
+
+
+        @Override
+        public void onViewCreated(View view, Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+
+        }
+
 
 
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
             LayoutInflater inflater = getActivity().getLayoutInflater();
-            builder.setTitle("Send ID");
+            View v = inflater.inflate(R.layout.dialog1, null);
 
-            builder.setView(inflater.inflate(R.layout.dialog1, null));
+            mode = getArguments().getString("MODE");
+            idToBeSent = getArguments().getString("ID");
+            if(mode.equals("BEACON")) {
+                builder.setTitle("Send ID");
+                message = "Please enter this ID("+idToBeSent+") in Receiver Activity";
+            }else if(mode.equals("ROOM")){
+                builder.setTitle("Send Room ID");
+                message ="Please enter this room ID("+idToBeSent+") in Room Activity";
+            }
+
+
+
+            builder.setView(v);
+            rb1 = (RadioButton)v.findViewById(R.id.radioButton);
+            rb2 = (RadioButton)v.findViewById(R.id.radioButton2);
             builder.setPositiveButton("Send", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     //send location to firebase db
+
+
+                   if(rb2.isChecked()){
+                       Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + ""));
+                       intent.putExtra("sms_body",message );
+                       startActivity(intent);
+                   }else{
+                       ClipboardManager clipboardManager = (ClipboardManager) getActivity().getSystemService(CLIPBOARD_SERVICE);
+                       ClipData clip = ClipData.newPlainText("ID",message);
+                       clipboardManager.setPrimaryClip(clip);
+
+
+                   }
                 }
             });
 
@@ -182,6 +234,8 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
                     dialog.dismiss();
                 }
             });
+
+
             return builder.create();
         }
 

@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class Utilities {
 
-    private boolean checkAvailability(String ID){
+    private static boolean checkAvailability(String ID){
         /**check in firebase if the generated ID exists. if it exists return false, else return true**/
         boolean result = false;
         //start a connection and send ID
@@ -25,7 +25,7 @@ public class Utilities {
 
 
 
-        public String generateID() {
+        public static String generateID() {
             /**generates ID **/
             String ID = "";
             Random random = new Random();
@@ -43,7 +43,7 @@ public class Utilities {
             }
         }
 
-        public String giveAlphabet(int i) {
+        public static String giveAlphabet(int i) {
             /**returns an alphabet from A-Z**/
             String[] alphabet = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
             String output = "";
@@ -67,7 +67,9 @@ public class Utilities {
 
 
 
-
+    public interface getRoomID{
+        void onRoomIDObtained(String id);
+    }
     }
 
 

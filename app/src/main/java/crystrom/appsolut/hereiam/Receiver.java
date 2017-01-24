@@ -1,7 +1,8 @@
 package crystrom.appsolut.hereiam;
 
-import android.app.Activity;
 
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
@@ -58,9 +59,12 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
 
 
         placeHolder = (TextView) findViewById(R.id.placeHolder);
-
-
         transmitterId = (EditText)findViewById(R.id.editText2);
+
+
+        String transmitFromNotification = getIntent().getExtras().getString("ID");
+
+
 
         startTrack = (Button) findViewById(R.id.button10);
         startTrack.setOnClickListener(new View.OnClickListener(){
@@ -80,7 +84,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
 
                                 try {
                                     String [] latLong =dataSnapshot.getValue(String.class).split(",");
-                                    if( isMapReady){
+                                    if( isMapReady){//make sure that map is ready before using it. this var is set in OnMapReadyCallback
                                         startTrack.setText("Stop Tracking");
 
                                         LatLng mark = new LatLng(Double.parseDouble(latLong[1]), Double.parseDouble(latLong[0]));
@@ -88,7 +92,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                                             prevValue = mark;
                                             mMap.addMarker(new MarkerOptions().position(mark).title(transmitterID));
                                             mMap.moveCamera(CameraUpdateFactory.newLatLng(mark));
-                                            mMap.moveCamera(CameraUpdateFactory.zoomIn());
+                                            mMap.moveCamera(CameraUpdateFactory.zoomTo(10.0f));
                                         }
                                         else{
                                             mMap.clear();
@@ -96,7 +100,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                                             float[] results = new float[2];
                                             locate.distanceBetween(prevValue.latitude,prevValue.longitude,mark.latitude,mark.longitude,results);
                                             Log.d("Distance",results[0] +"");
-                                            if(results[0] > 10)//only takes positions which are atleast 10 meters away from the previous point
+                                            if(results[0] > 5)//only takes positions which are atleast 10 meters away from the previous point
                                             {
                                                 prevValue = mark;
                                                 if(positions.size() >= 8)// since the number of points in polyline is limited to 8
@@ -115,7 +119,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
 
                                                 mMap.addMarker(new MarkerOptions().position(mark).title(transmitterID));
                                                 mMap.moveCamera(CameraUpdateFactory.newLatLng(mark));
-                                                mMap.moveCamera(CameraUpdateFactory.zoomIn());
+                                                mMap.moveCamera(CameraUpdateFactory.zoomTo(19.0f));
                                             }
 
 
@@ -127,6 +131,9 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                                     placeHolder.setText("Last updated at " + Calendar.getInstance().getTime());
                                 }catch(IndexOutOfBoundsException e){
                                     Toast.makeText(getApplicationContext(),"Failure in receiving Coordinates. Make sure the Beacon is broadcasting!",Toast.LENGTH_SHORT).show();
+                                }
+                                catch(NullPointerException e){
+                                    Toast.makeText(getApplicationContext(),"Incorrect ID or Broadcast has been stopped!", Toast.LENGTH_SHORT).show();
                                 }
                                 catch(Exception e){
                                     Toast.makeText(getApplicationContext(),e.toString(),Toast.LENGTH_SHORT).show();
@@ -151,6 +158,14 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
             }
         });
 
+        if(transmitFromNotification.matches("[A-Z]{4}[0-9]{4}")){
+            transmitterId.setText(transmitFromNotification);
+            startTrack.performClick();
+            PendingIntent pi = PendingIntent.getActivity(this, 0,new Intent(this, Receiver.class).setAction(transmitFromNotification),0);
+            pi.cancel();
+        }else{
+            Toast.makeText(this,"transmitterID " + transmitFromNotification,Toast.LENGTH_LONG).show();
+        }
 
 
     }
