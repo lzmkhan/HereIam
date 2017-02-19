@@ -19,7 +19,7 @@
         android:layout_centerHorizontal="true"
         android:hint="Ex: ABCD1234"
         android:textAlignment="center"
-
+        android:freezesText="true"
         android:paddingLeft="10dp"
         android:paddingRight="10dp" />
     <Button

@@ -23,5 +23,6 @@ public class NotificationService extends FirebaseInstanceIdService {
 
     public void sendRegistrationToServer(String refreshToken){
 
+
     }
 }

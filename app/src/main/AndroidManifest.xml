@@ -1,66 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-package="crystrom.appsolut.hereiam">
+    package="crystrom.appsolut.hereiam">
 
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-<uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.RECEIVE_SMS" />
-<uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
 
-<application
-    android:allowBackup="true"
-    android:icon="@mipmap/ic_launcher"
-    android:label="@string/app_name"
-    android:supportsRtl="true"
-    android:theme="@style/AppTheme">
-    <activity android:name=".MainActivity">
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-    </activity>
-    <activity android:name=".Room" />
-    <activity android:name=".Beacon" />
-    <activity android:name=".Receiver" />
-    <activity android:name=".Settings" />
-    <!--
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".Room" />
+        <activity android:name=".Receiver" />
+        <activity android:name=".Settings" />
+        <!--
          ATTENTION: This was auto-generated to add Google Play services to your project for
          App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information.
-    -->
+        -->
 
 
-    <!--
+        <!--
          The API key for Google Maps-based APIs is defined as a string resource.
          (See the file "res/values/google_maps_api.xml").
          Note that the API key is linked to the encryption key used to sign the APK.
          You need a different API key for each encryption key, including the release key that is used to
          sign the APK for publishing.
          You can define the keys for the debug and release targets in src/debug/ and src/release/.
-    -->
-    <meta-data
-        android:name="com.google.android.geo.API_KEY"
-        android:value="@string/google_maps_key" />
+        -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
 
-    <receiver
-        android:name=".ReadSMS"
-        android:enabled="true"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-        </intent-filter>
-    </receiver>
+        <receiver
+            android:name=".ReadSMS"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
 
-    <service android:name=".NotificationService">
-        <intent-filter>
-            <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
-        </intent-filter>
-    </service>
-    <service
-        android:name=".MessagingService"
-        android:enabled="true"
-        android:exported="true"></service>
-</application>
+        <service android:name=".NotificationService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".MessagingService"
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity
+            android:name=".Beacon"
+            android:label="@string/title_activity_beacon"></activity>
+    </application>
 
 </manifest>

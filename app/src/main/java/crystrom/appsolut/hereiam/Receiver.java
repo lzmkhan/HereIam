@@ -92,18 +92,19 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                                             prevValue = mark;
                                             mMap.addMarker(new MarkerOptions().position(mark).title(transmitterID));
                                             mMap.moveCamera(CameraUpdateFactory.newLatLng(mark));
-                                            mMap.moveCamera(CameraUpdateFactory.zoomTo(10.0f));
+                                            mMap.moveCamera(CameraUpdateFactory.zoomTo(17.0f));
+                                            positions.add(mark);
                                         }
                                         else{
-                                            mMap.clear();
+
                                             Location locate = new Location(LocationManager.GPS_PROVIDER);
                                             float[] results = new float[2];
                                             locate.distanceBetween(prevValue.latitude,prevValue.longitude,mark.latitude,mark.longitude,results);
                                             Log.d("Distance",results[0] +"");
-                                            if(results[0] > 5)//only takes positions which are atleast 10 meters away from the previous point
+                                            if(results[0] > 5)//only takes positions which are atleast 5 meters away from the previous point
                                             {
                                                 prevValue = mark;
-                                                if(positions.size() >= 8)// since the number of points in polyline is limited to 8
+                                                if(positions.size() >= 100)// since the number of points in polyline is limited to 8
                                                 {//we are restricting the number of points to 8
 
                                                     positions.remove(0); // we are removing the first point added to the list as means of trailing the movement
@@ -112,14 +113,15 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                                                 }else{
                                                     positions.add(mark);
                                                 }
+                                                mMap.clear();
                                                 mMap.addPolyline(
                                                         new PolylineOptions().addAll(positions)
-                                                            .color(Color.GREEN)
+                                                            .color(Color.BLUE)
                                                 );
 
                                                 mMap.addMarker(new MarkerOptions().position(mark).title(transmitterID));
                                                 mMap.moveCamera(CameraUpdateFactory.newLatLng(mark));
-                                                mMap.moveCamera(CameraUpdateFactory.zoomTo(19.0f));
+                                                // mMap.moveCamera(CameraUpdateFactory.zoomTo(15.0f));
                                             }
 
 

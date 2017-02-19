@@ -8,6 +8,7 @@ import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -65,7 +66,7 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
 
         manager = (LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE);
 
-        sendIdBtn = (Button)findViewById(R.id.button8);
+       sendIdBtn = (Button)findViewById(R.id.button8);
         sendIdBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v)
@@ -85,7 +86,7 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
             }
         });
 
-        stopBCBtn = (Button)findViewById(R.id.button9);
+       stopBCBtn = (Button)findViewById(R.id.button9);
         stopBCBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -119,10 +120,10 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
         });
 
         googleApi = new GoogleApiClient.Builder(getApplicationContext())
-                    .addApi(LocationServices.API)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .build();
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
     }
 
 
@@ -169,8 +170,12 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-    Toast.makeText(getApplicationContext(),"Connection Failed", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(),"Connection Failed", Toast.LENGTH_SHORT).show();
     }
+
+
+
+
 
     public static class customDialog extends DialogFragment{
         String mode,message;
@@ -211,20 +216,18 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
             builder.setPositiveButton("Send", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    //send location to firebase db
+
+                    if(rb2.isChecked()){
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + ""));
+                        intent.putExtra("sms_body",message );
+                        startActivity(intent);
+                    }else{
+                        ClipboardManager clipboardManager = (ClipboardManager) getActivity().getSystemService(CLIPBOARD_SERVICE);
+                        ClipData clip = ClipData.newPlainText("ID",message);
+                        clipboardManager.setPrimaryClip(clip);
 
 
-                   if(rb2.isChecked()){
-                       Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("sms:" + ""));
-                       intent.putExtra("sms_body",message );
-                       startActivity(intent);
-                   }else{
-                       ClipboardManager clipboardManager = (ClipboardManager) getActivity().getSystemService(CLIPBOARD_SERVICE);
-                       ClipData clip = ClipData.newPlainText("ID",message);
-                       clipboardManager.setPrimaryClip(clip);
-
-
-                   }
+                    }
                 }
             });
 
