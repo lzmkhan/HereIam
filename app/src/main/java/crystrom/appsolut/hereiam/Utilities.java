@@ -1,6 +1,7 @@
 package crystrom.appsolut.hereiam;
 
 import android.util.Log;
+import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -15,53 +16,39 @@ import java.util.Random;
  */
 
 public class Utilities implements ValueEventListener{
-    static boolean availability;
-    static FirebaseDatabase fireDb = FirebaseDatabase.getInstance();
-    static DatabaseReference dbRef1;
-    private static boolean checkAvailability(String ID) {
-        /**check in firebase if the generated ID exists. if it exists return false, else return true**/
-        final String id = "QKAR6584";
-        //availability = true;
-        //start a connection and send ID
-        //the python script at server will check whether the generated id is already present
-        //if it is present it will set result to true
-        //Note to myself
-        //The below code isnt working. I could not simulate a datachange event for this singlevalueevent listener to trigger
-        //need to work on this till then by default the availability is set to true. once you figure this shit out
-        //change it back to false.
-            dbRef1 = fireDb.getReference("hereiam-5b3de");
-            dbRef1.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    try {
+    DataSnapshot currentData;
+    DatabaseReference dbRef1;
+    FirebaseDatabase firebaseReference = FirebaseDatabase.getInstance();
 
-                        Log.d("ID",id);
-                        if (dataSnapshot.hasChild(id) || dataSnapshot.hasChild("Room:" + id)) {
-                            Log.d("key", "Key exists!");
-                            availability = false;
-                        } else {
-                            availability = true;
-                        }
-                    } catch (Exception e) {
-                        Log.d("Error", "error getting key" + e.toString());
-                    }
-                    
-                }
+    public final static int ROOM_MODE = 1;
+    public final static int BEACON_MODE = 2;
+    int mode;
+    CustomListeners.updateUI updateUI;
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+    public Utilities(){
+        dbRef1 = firebaseReference.getReference("Users");
+        dbRef1.addListenerForSingleValueEvent(this);
+    }
 
-                }
-            });
+    public void setUpdateUIListener(CustomListeners.updateUI ui){
+        this.updateUI = ui;
+    }
 
-
-        Log.d("Availability","" + availability);
-        return availability;
+    @Override
+    public void onDataChange(DataSnapshot dataSnapshot) {
+        currentData = dataSnapshot;
+        Log.d("firebase","triggered");
+        String id = generateID();
+        updateUI.updateUIElements(id);
 
     }
 
+    @Override
+    public void onCancelled(DatabaseError databaseError) {
 
-    public static String generateID() {
+    }
+
+    private String generateID() {
         /**generates ID **/
         String ID = "";
         Random random = new Random();
@@ -72,16 +59,22 @@ public class Utilities implements ValueEventListener{
                 ID = ID + random.nextInt(9);
             }
         }
-
-
-        if (checkAvailability(ID)) {
-            return ID;
-        } else {
-            return generateID();
+        if(currentData != null){
+            if(currentData.hasChild(ID)){
+                Log.d("ID status",ID + " Exists!");
+                generateID();
+            }else{
+                Log.d("ID status", ID + " Does not Exists!");
+                return ID;
+            }
+        }else{
+            Log.d("Utilities","current Data is null");
         }
+
+        return ID;
     }
 
-    public static String giveAlphabet(int i) {
+    private static String giveAlphabet(int i) {
         /**returns an alphabet from A-Z**/
         String[] alphabet = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
         String output = "";
@@ -96,28 +89,6 @@ public class Utilities implements ValueEventListener{
         }
         return output;
     }
-
-    @Override
-    public void onDataChange(DataSnapshot dataSnapshot) {
-
-    }
-
-    @Override
-    public void onCancelled(DatabaseError databaseError) {
-
-    }
-
-/*    // Write a message to the database
-    FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef = database.getReference("message");
-
-    myRef.setValue("Hello, World!");*/
-
-
-    public interface getRoomID {
-        void onRoomIDObtained(String id);
-    }
-
 
 }
 

@@ -5,6 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="crystrom.appsolut.hereiam.Room">
+
+
     <fragment
         android:id="@+id/map1"
         android:name="com.google.android.gms.maps.SupportMapFragment"
@@ -12,6 +14,28 @@
         android:layout_height="match_parent"
         tools:context="crystrom.appsolut.hereiam.Room"
         android:layout_alignParentTop="true" />
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id = "@+id/progressBarContainer"
+        android:visibility="gone"
+        android:background="#75000000">
+
+        <android.support.v4.widget.ContentLoadingProgressBar
+            android:id="@+id/progressBar2"
+            android:indeterminate="true"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            />
+    </RelativeLayout>
+
+
+
 
     <com.github.clans.fab.FloatingActionMenu
         android:id="@+id/fabmenu"

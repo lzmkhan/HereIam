@@ -11,6 +11,7 @@ import android.content.ClipboardManager;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -35,20 +36,22 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 
-public class Beacon extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
 
+public class Beacon extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
+    private final int MODE_PRIVATE = 0;
+    private final int REQUEST_ACCESS_LOCATION = 1;
     TextView idText;
     String ID ="";
     Button sendIdBtn;
     Button stopBCBtn;
     int delay=5000;//to be taken from settings
     ProgressBar pr;
-    private int REQUEST_ACCESS_LOCATION = 1;
     GoogleApiClient googleApi;
     LocationManager  manager;
-    Utilities util = new Utilities();
     FirebaseDatabase database;
     DatabaseReference myRef;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +64,18 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
         pr= (ProgressBar) findViewById(R.id.progressBar);
         pr.setVisibility(View.INVISIBLE);
         idText = (TextView)findViewById(R.id.idTextView);
-        ID = util.generateID();
-        idText.setText(ID);
+        idText.setText("Fetching ID...");
+
+        Utilities util  = new Utilities();
+        util.setUpdateUIListener(new CustomListeners.updateUI() {
+            @Override
+            public void updateUIElements(String id) {
+                idText.setText(id);
+                stopBCBtn.setEnabled(true);
+                ID = id;
+            }
+        });
+
 
         manager = (LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE);
 
@@ -87,6 +100,7 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
         });
 
        stopBCBtn = (Button)findViewById(R.id.button9);
+        stopBCBtn.setEnabled(false);
         stopBCBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -114,7 +128,15 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
                     pr.setVisibility(View.INVISIBLE);
 
                     googleApi.disconnect();
-                    myRef.removeValue();
+                    try {
+                        myRef.removeValue();
+                    }catch(NullPointerException e){
+                        Toast.makeText(getBaseContext(),"Error: User never existed to remove now!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    // if the user stops broadcasting, the broadcasting flag is set to false. This flag is used in onPause, onResume and onRestart methods
+                    //to determine whether to use the same ID to broadcast.
+                    getSharedPreferences("Beacon", MODE_PRIVATE).edit().putBoolean("IS_BROADCASTING", false).commit();
                 }
             }
         });
@@ -174,8 +196,99 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
     }
 
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        Toast.makeText(getBaseContext(),"Saving state",Toast.LENGTH_SHORT).show();
+
+        //Storing the activity state
+        SharedPreferences.Editor preferences = getSharedPreferences("Beacon",MODE_PRIVATE).edit();
+
+        if(stopBCBtn.getText().equals("Stop Broadcasting")){
+            preferences.putBoolean("IS_BROADCASTING",true);
+            preferences.putString("BEACON_ID",ID);
+        }else{
+            preferences.putBoolean("IS_BROADCASTING",false);
+            preferences.remove("BEACON_ID");
+            
+        }
+        preferences.commit();
+
+        Log.d("onPauseID",ID);
+
+    }
 
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        SharedPreferences preference1 = getSharedPreferences("Beacon",MODE_PRIVATE);
+        Toast.makeText(getBaseContext(),"Restoring state",Toast.LENGTH_SHORT).show();
+
+
+
+        //Starting broadcast if the activity was broadcasting prior to pause
+        if(preference1.getBoolean("IS_BROADCASTING",false)){
+            //Setting Beacon ID obtained prior to pause.
+            ID = preference1.getString("BEACON_ID","");
+            //if BEACON_ID is not saved in onPause then do nothing
+            if(ID.equals("")){
+                //Do nothing.
+            }else{
+                idText.setText(ID);
+                if(stopBCBtn.getText().equals("Start Broadcasting")) {
+                    stopBCBtn.callOnClick();
+                }else{
+                    //Do nothing
+                }
+            }
+        }else{
+            //Do nothing
+        }
+        Log.d("onResumeID",ID);
+    }
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        SharedPreferences pref1 = getSharedPreferences("Beacon", MODE_PRIVATE);
+
+        //If the activity was already broadcasting while moved to background
+        //IS_Broadcasting flag will be set to true.
+        //If the above flag was indeed set to true in onResume()
+        //set id to previous id.
+        if(pref1.getBoolean("IS_BROADCASTING", false)){
+            ID = pref1.getString("BEACON_ID","");
+            if(ID.equals("")){
+                    //Do nothing let logic in OnCreate take care of that.
+            }else{
+                idText.setText(ID);
+                if(stopBCBtn.getText().equals("Start Broadcasting")) {
+                    stopBCBtn.callOnClick();
+                }else{
+                    //Do nothing
+                }
+            }
+
+        }else{
+            //Do nothing let the onCreate method take care of it.
+    }
+        Log.d("onRestartID",ID);
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //Remove the activity state
+        getSharedPreferences("Beacon", MODE_PRIVATE).edit().putBoolean("IS_BROADCASTING", false).commit();
+
+        //Remove the current ID and location data from firebase.
+        if(myRef != null)
+            myRef.removeValue();
+    }
 
     public static class customDialog extends DialogFragment{
         String mode,message;
@@ -205,7 +318,7 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
                 message = "Please enter this ID("+idToBeSent+") in Receiver Activity";
             }else if(mode.equals("ROOM")){
                 builder.setTitle("Send Room ID");
-                message ="Please enter this room ID("+idToBeSent+") in Room Activity";
+                message ="Please enter this ID("+idToBeSent+") in Room Activity";
             }
 
 
@@ -247,7 +360,7 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
 
     void writeToFirebase(String longitude, String latitude){
 
-        myRef = database.getReference(ID);
+        myRef = database.getReference("Users/" + ID);
         myRef.setValue(longitude + "," + latitude);
 
     }

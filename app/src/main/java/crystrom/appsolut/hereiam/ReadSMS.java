@@ -48,7 +48,8 @@ public class ReadSMS extends BroadcastReceiver {
                         String message = currentMessage.getMessageBody();
 
                         //"Please enter this ID(\"+idToBeSent+\") in Receiver Activity";
-                        String pattern  = "Please\\senter\\sthis\\sID\\([A-Z]{4}[0-9]{4}\\)\\sin\\sReceiver\\sActivity";
+                        //String pattern  = "Please\\senter\\sthis\\sID\\([A-Z]{4}[0-9]{4}\\)\\sin\\sReceiver\\sActivity";
+                        String pattern = "Please\\senter\\sthis\\sID\\([A-Z]{4}[0-9]{4}\\)\\sin\\s[Roomecivr]{4,8}\\sActivity";
                         Pattern pattern1 = Pattern.compile(pattern);
                         Matcher match = pattern1.matcher(message);
                         if(match.find()) {
@@ -66,12 +67,17 @@ public class ReadSMS extends BroadcastReceiver {
                                     "senderNum: " + senderNum + ", message: " + ID, duration);
                             toast.show();
 
+                            Intent startIntent;
+                            if(message.contains("Room")){
+                                startIntent = new Intent(context, Room.class);
+                            }else{
+                                startIntent = new Intent(context, Receiver.class);
+                            }
 
-                            Intent snoozeIntent = new Intent(context, Receiver.class);
 
-                            snoozeIntent.putExtra("ID",ID);
-                            snoozeIntent.setAction(ID);// because putExtra is not received if setAction is not unique. it will take the first intent with the same action
-                            PendingIntent piOpen = PendingIntent.getActivity(context, 0, snoozeIntent, 0);
+                            startIntent.putExtra("ID",ID);
+                            startIntent.setAction(ID);// because putExtra is not received if setAction is not unique. it will take the first intent with the same action
+                            PendingIntent piOpen = PendingIntent.getActivity(context, 0, startIntent, 0);
 
 
                                 // Constructs the Builder object.
@@ -82,7 +88,7 @@ public class ReadSMS extends BroadcastReceiver {
                                             .setContentText("Broadcast ID(" + ID + ") received from " + senderNum)
                                             .setDefaults(Notification.DEFAULT_ALL) // requires VIBRATE permission
                                             .setStyle(new Notification.BigTextStyle()
-                                                    .bigText("You have received a Broadcast ID(" + ID + ") from " + senderNum + ". You can tap this notification to go directly to app's Receiver page"))
+                                                    .bigText("You have received a Broadcast ID(" + ID + ") from " + senderNum + ". You can tap this notification to go directly to app's Receiver/Room page"))
                                             .setContentIntent(piOpen);
 
 

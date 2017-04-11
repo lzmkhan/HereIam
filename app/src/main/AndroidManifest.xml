@@ -63,7 +63,12 @@
 
         <activity
             android:name=".Beacon"
-            android:label="@string/title_activity_beacon"></activity>
+            android:label="@string/title_activity_beacon" />
+
+        <service
+            android:name=".BeaconService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>

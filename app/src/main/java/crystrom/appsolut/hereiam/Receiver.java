@@ -166,7 +166,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
             PendingIntent pi = PendingIntent.getActivity(this, 0,new Intent(this, Receiver.class).setAction(transmitFromNotification),0);
             pi.cancel();
         }else{
-            Toast.makeText(this,"transmitterID " + transmitFromNotification,Toast.LENGTH_LONG).show();
+            Toast.makeText(this,"Transmitter ID " + transmitFromNotification,Toast.LENGTH_LONG).show();
         }
 
 

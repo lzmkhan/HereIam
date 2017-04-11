@@ -26,6 +26,7 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 // Start geocode activity
                 Intent roomIntent = new Intent();
+                roomIntent.putExtra("ID","NORMAL");
                 roomIntent.setClass(getApplicationContext(), Room.class);
                 startActivity(roomIntent);
 

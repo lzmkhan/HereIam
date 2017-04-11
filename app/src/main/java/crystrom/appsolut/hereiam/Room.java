@@ -9,11 +9,11 @@ package crystrom.appsolut.hereiam;
         import android.os.Bundle;
         import android.support.v4.app.FragmentActivity;
         import android.app.AlertDialog;
+        import android.support.v4.widget.ContentLoadingProgressBar;
         import android.util.Log;
         import android.view.LayoutInflater;
         import android.view.View;
         import android.widget.EditText;
-
         import android.widget.TextView;
         import android.widget.Toast;
 
@@ -34,7 +34,7 @@ package crystrom.appsolut.hereiam;
         import java.util.Map;
 
 
-public class Room extends FragmentActivity implements OnMapReadyCallback,Utilities.getRoomID {
+public class Room extends FragmentActivity implements OnMapReadyCallback,CustomListeners.getRoomID,CustomListeners.updateUI {
 
 
     GoogleMap mMap;
@@ -46,6 +46,8 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
     Marker user1Marker,user2Marker,user3Marker,user4Marker;
     FloatingActionButton fab1,fab2, fab5, fab6;
     String SLOT="USER1";
+    String smsID;
+    ContentLoadingProgressBar progressBar2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,8 +57,15 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map1);
         mapFragment.getMapAsync(this);
 
+
+        progressBar2 = (ContentLoadingProgressBar)findViewById(R.id.progressBar2);
+        progressBar2.setVisibility(View.INVISIBLE);
+
         txt1 = (TextView)findViewById(R.id.textView);
         txt1.setVisibility(View.INVISIBLE);
+
+        smsID = getIntent().getExtras().getString("ID");
+
 
         fireDatabase = FirebaseDatabase.getInstance();
 
@@ -74,16 +83,21 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
             public void onClick(View v) {
                 if(fab1.getLabelText().equals("Enter a Room")) {
                     //Enter a room make an alert dialog and get the room id
-                    CustomInputDialog dialog1 = new CustomInputDialog();
-                    dialog1.setOut(Room.this);
 
-                    dialog1.show(getFragmentManager().beginTransaction(), "getRoomID");
+                    if(smsID.equals("NORMAL")) {
+                        CustomInputDialog dialog1 = new CustomInputDialog();
+                        dialog1.setOut(Room.this);
+
+                        dialog1.show(getFragmentManager().beginTransaction(), "getRoomID");
+                    }else{
+                        onRoomIDObtained(smsID);
+                    }
                     fireDatabase.goOnline();
 
-
-
                 }else{
+
                     fab1.setLabelText("Enter a Room");
+                    fab2.setLabelText("Create a Room");
                     txt1.setText("");
                     txt1.setVisibility(View.INVISIBLE);
                     DatabaseReference dbRef12 = fireDatabase.getReference("Room:" + roomID + "/"+SLOT);
@@ -92,11 +106,15 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
                     dbRef12.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
-                            String freeSlot = dataSnapshot.getValue().toString();
-                            freeSlot =freeSlot + "," + SLOT.replace("USER","");
-                            DatabaseReference dbRef13 = fireDatabase.getReference("Room:" + roomID + "/FREESLOTS");
-                            dbRef13.setValue(freeSlot);
-                            SLOT = "USER1";
+                            if(dataSnapshot != null) {
+                                String freeSlot = dataSnapshot.getValue().toString();
+                                freeSlot = freeSlot + "," + SLOT.replace("USER", "");
+                                DatabaseReference dbRef13 = fireDatabase.getReference("Room:" + roomID + "/FREESLOTS");
+                                dbRef13.setValue(freeSlot);
+                                SLOT = "USER1";
+                            }else{
+                                //Do nothing
+                            }
                         }
 
                         @Override
@@ -116,16 +134,25 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
 
                 if(fab2.getLabelText().equals("Create a Room")) {
                     //Create a room auto generate room ID.
-
-
-                    roomID = Utilities.generateID();
                     fireDatabase.goOnline();
-                    createRoom(roomID);
-                    fab2.setLabelText("Close this Room");
-                    txt1.setText(roomID);
-                    txt1.setVisibility(View.VISIBLE);
+                    Utilities util  = new Utilities();
+                    util.setUpdateUIListener(new CustomListeners.updateUI() {
+                        @Override
+                        public void updateUIElements(String id) {
+                            roomID = id;
+                            fireDatabase.goOnline();
+                            createRoom(roomID);
+                            fab2.setLabelText("Close this Room");
+                            fab2.setEnabled(true);
+                            txt1.setText(roomID);
+                            txt1.setVisibility(View.VISIBLE);
+                        }
+                    });
+                    fab2.setEnabled(false);
+                    progressBar2.setVisibility(View.VISIBLE);
                 }else{
                     fab2.setLabelText("Create a Room");
+                    fab1.setLabelText("Enter a Room");
                     txt1.setText("");
                     txt1.setVisibility(View.INVISIBLE);
                     DatabaseReference closeRoomRef = fireDatabase.getReference("Room:" + roomID);
@@ -143,9 +170,9 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
         fab5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //Start broadcasting, get the room id, write to firebase record whose parent has room id
+
             if(roomAvailable == true){
-                //start broadcasting if room available
+
             }
 
 
@@ -168,6 +195,12 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
             }
         });
 
+
+        if(smsID.equals("NORMAL")){
+            //Do nothing
+        }else if( smsID.matches("[A-Z]{4}[0-9]{4}")){
+            fab1.performClick();
+        }
 
     }
 
@@ -194,6 +227,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
         fab5.setVisibility(View.VISIBLE);
 
             watchRoom(ID);
+        updateUIElements(ID);
 
     }
 
@@ -223,6 +257,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
 
                     roomAvailable = true;
                     watchRoom(roomID);
+                    updateUIElements(roomID);
                 }else{
                     Toast.makeText(getApplicationContext(),"Room is full. No slots available!", Toast.LENGTH_SHORT).show();
                     roomAvailable = false;
@@ -239,8 +274,16 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
         fab5.setVisibility(View.VISIBLE);
     }
 
+    @Override
+    public void updateUIElements(String id) {
+        if (roomAvailable ==true) {
+            progressBar2.setVisibility(View.INVISIBLE);
 
-
+            fab1.setLabelText("Exit Room");
+            txt1.setText(roomID);
+            txt1.setVisibility(View.VISIBLE);
+        }
+    }
 
     public void watchRoom(String ID) {
 
@@ -263,13 +306,13 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
         user1Ref.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Log.i("user4",dataSnapshot.getValue(String.class));
+                //Log.i("user4",dataSnapshot.getValue(String.class));
                 if(roomAvailable != false) {
                     String content = dataSnapshot.getValue().toString();
                     if (!content.equals("NONE") ) {
                         if(content.contains("BC:")){
                             final String id = content.replace("BC:","");
-                            user1BidWatcher = fireDatabase.getReference(id);
+                            user1BidWatcher = fireDatabase.getReference("Users/" + id);
                             user1BidWatcher.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -316,7 +359,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
                     if (!content.equals("NONE") ) {
                         if(content.contains("BC:")){
                             final String id = content.replace("BC:","");
-                            user2BidWatcher = fireDatabase.getReference(id);
+                            user2BidWatcher = fireDatabase.getReference("Users/" + id);
                             user2BidWatcher.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -364,7 +407,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
                     if (!content.equals("NONE") ) {
                         if(content.contains("BC:")){
                             final String id = content.replace("BC:","");
-                            user3BidWatcher = fireDatabase.getReference(id);
+                            user3BidWatcher = fireDatabase.getReference("Users/" + id);
                             user3BidWatcher.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -411,7 +454,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
                     if (!content.equals("NONE") ) {
                         if(content.contains("BC:")){
                             final String id = content.replace("BC:","");
-                            user4BidWatcher = fireDatabase.getReference(id);
+                            user4BidWatcher = fireDatabase.getReference("Users/" + id);
                             user4BidWatcher.addValueEventListener(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -454,20 +497,18 @@ public class Room extends FragmentActivity implements OnMapReadyCallback,Utiliti
     public void onRoomIDObtained(String id) {
         roomID = id.toUpperCase();
         getRoom(roomID);
-        if (roomAvailable ==true) {
-            fab1.setLabelText("Exit Room");
-            txt1.setText(roomID);
-            txt1.setVisibility(View.VISIBLE);
-        }
+
     }
+
+
 
     public static class CustomInputDialog extends DialogFragment{
         public static  String obtainedID ="";
         EditText ed1;
         public boolean status = false;
-        Utilities.getRoomID out;
+        CustomListeners.getRoomID out;
 
-        public void setOut(Utilities.getRoomID ot){
+        public void setOut(CustomListeners.getRoomID ot){
             this.out = ot;
         }
 
