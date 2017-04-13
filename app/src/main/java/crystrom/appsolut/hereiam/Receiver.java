@@ -77,7 +77,8 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                     }else{
                         //handle the firebase communication. start receiving updates from the db and update the map.
                         database.goOnline();
-                        myRef = database.getReference(transmitterID.toUpperCase());
+                        myRef = database.getReference("Users/" + transmitterID.toUpperCase());
+                        //myRef = database.getReference(transmitterID.toUpperCase());
                         myRef.addValueEventListener(new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -104,8 +105,8 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                                             if(results[0] > 5)//only takes positions which are atleast 5 meters away from the previous point
                                             {
                                                 prevValue = mark;
-                                                if(positions.size() >= 100)// since the number of points in polyline is limited to 8
-                                                {//we are restricting the number of points to 8
+                                                if(positions.size() >= 100)
+                                                {//we are restricting the number of points to 100
 
                                                     positions.remove(0); // we are removing the first point added to the list as means of trailing the movement
                                                     positions.add(mark);
