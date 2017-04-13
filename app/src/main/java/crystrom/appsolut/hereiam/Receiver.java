@@ -39,12 +39,11 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
     FirebaseDatabase database;
     DatabaseReference myRef;
     TextView placeHolder;
-    private GoogleMap mMap;
     boolean isMapReady = false;
     String transmitterID;
     LatLng prevValue = null;
     List<LatLng> positions = new ArrayList<LatLng>();
-
+    private GoogleMap mMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +54,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        //gets firebase instance
         database = FirebaseDatabase.getInstance();
 
 
@@ -100,7 +100,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
 
                                             Location locate = new Location(LocationManager.GPS_PROVIDER);
                                             float[] results = new float[2];
-                                            locate.distanceBetween(prevValue.latitude,prevValue.longitude,mark.latitude,mark.longitude,results);
+                                            Location.distanceBetween(prevValue.latitude, prevValue.longitude, mark.latitude, mark.longitude, results);
                                             Log.d("Distance",results[0] +"");
                                             if(results[0] > 5)//only takes positions which are atleast 5 meters away from the previous point
                                             {
