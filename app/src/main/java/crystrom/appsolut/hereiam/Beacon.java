@@ -8,7 +8,6 @@ import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -27,6 +26,7 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -35,6 +35,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.Calendar;
 
 
 public class Beacon extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
@@ -50,6 +51,7 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
     LocationManager  manager;
     FirebaseDatabase database;
     DatabaseReference myRef;
+    UserNode userNode;
 
 
 
@@ -73,6 +75,7 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
                 idText.setText(id);
                 stopBCBtn.setEnabled(true);
                 ID = id;
+                userNode = new UserNode("0", "0");
             }
         });
 
@@ -161,7 +164,8 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
                 String lat = String.valueOf(mLastLocation.getLatitude());
                 String lon = String.valueOf(mLastLocation.getLongitude());
                 Log.d("Location","Latitude = " + lat + "Longitude"+ lon);
-                writeToFirebase(lon,lat);
+                userNode.updateLatLong(lat, lon, Calendar.getInstance().getTime().toString());
+                writeToFirebase(userNode);
 
             }
         }
@@ -184,7 +188,8 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
     public void onLocationChanged(Location location) {
         if(manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             Log.d("Location", "Latitude = " + location.getLatitude() + " Longitude = " + location.getLongitude());
-            writeToFirebase(String.valueOf(location.getLongitude()),String.valueOf(location.getLatitude()));
+            userNode.updateLatLong(String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude()), Calendar.getInstance().getTime().toString());
+            writeToFirebase(userNode);
         }else{
             Toast.makeText(getApplicationContext(),"GPS has been disabled!",Toast.LENGTH_SHORT).show();
         }
@@ -290,6 +295,13 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
             myRef.removeValue();
     }
 
+    void writeToFirebase(UserNode user) {
+
+        myRef = database.getReference("Users/" + ID);
+        myRef.setValue(user);
+
+    }
+
     public static class customDialog extends DialogFragment{
         String mode,message;
         String idToBeSent;
@@ -315,10 +327,10 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
             idToBeSent = getArguments().getString("ID");
             if(mode.equals("BEACON")) {
                 builder.setTitle("Send ID");
-                message = "Please enter this ID("+idToBeSent+") in Receiver Activity";
+                message = "Please enter this ID(" + idToBeSent + ") in Receiver Page";
             }else if(mode.equals("ROOM")){
                 builder.setTitle("Send Room ID");
-                message ="Please enter this ID("+idToBeSent+") in Room Activity";
+                message = "Please enter this ID(" + idToBeSent + ") in Room Page";
             }
 
 
@@ -355,13 +367,6 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
             return builder.create();
         }
 
-
-    }
-
-    void writeToFirebase(String longitude, String latitude){
-
-        myRef = database.getReference("Users/" + ID);
-        myRef.setValue(longitude + "," + latitude);
 
     }
 

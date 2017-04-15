@@ -1,7 +1,6 @@
 package crystrom.appsolut.hereiam;
 
 import android.util.Log;
-import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -16,18 +15,33 @@ import java.util.Random;
  */
 
 public class Utilities implements ValueEventListener{
+    public final static int ROOM_MODE = 1;
+    public final static int BEACON_MODE = 2;
     DataSnapshot currentData;
     DatabaseReference dbRef1;
     FirebaseDatabase firebaseReference = FirebaseDatabase.getInstance();
-
-    public final static int ROOM_MODE = 1;
-    public final static int BEACON_MODE = 2;
     int mode;
     CustomListeners.updateUI updateUI;
 
     public Utilities(){
         dbRef1 = firebaseReference.getReference("Users");
         dbRef1.addListenerForSingleValueEvent(this);
+    }
+
+    private static String giveAlphabet(int i) {
+        /**returns an alphabet from A-Z**/
+        String[] alphabet = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
+        String output = "";
+        try {
+            if (i >= 0 && i < 26) {
+                output = alphabet[i];
+            } else {
+                throw new Exception("Value not between 0-26 cannot generate Alphabet");
+            }
+        } catch (Exception e) {
+            Log.d("Exception at Beacon", e.toString());
+        }
+        return output;
     }
 
     public void setUpdateUIListener(CustomListeners.updateUI ui){
@@ -72,22 +86,6 @@ public class Utilities implements ValueEventListener{
         }
 
         return ID;
-    }
-
-    private static String giveAlphabet(int i) {
-        /**returns an alphabet from A-Z**/
-        String[] alphabet = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"};
-        String output = "";
-        try {
-            if (i >= 0 && i < 26) {
-                output = alphabet[i];
-            } else {
-                throw new Exception("Value not between 0-26 cannot generate Alphabet");
-            }
-        } catch (Exception e) {
-            Log.d("Exception at Beacon", e.toString());
-        }
-        return output;
     }
 
 }

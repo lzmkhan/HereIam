@@ -29,7 +29,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
@@ -43,6 +42,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
     String transmitterID;
     LatLng prevValue = null;
     List<LatLng> positions = new ArrayList<LatLng>();
+    UserNode user;
     private GoogleMap mMap;
 
     @Override
@@ -84,11 +84,13 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
                             public void onDataChange(DataSnapshot dataSnapshot) {
 
                                 try {
-                                    String [] latLong =dataSnapshot.getValue(String.class).split(",");
+                                    user = dataSnapshot.getValue(UserNode.class);
+                                    placeHolder.setText("Last updated at " + user.lastUpdated);
+                                    //String [] latLong =dataSnapshot.getValue(String.class).split(",");
                                     if( isMapReady){//make sure that map is ready before using it. this var is set in OnMapReadyCallback
                                         startTrack.setText("Stop Tracking");
 
-                                        LatLng mark = new LatLng(Double.parseDouble(latLong[1]), Double.parseDouble(latLong[0]));
+                                        LatLng mark = new LatLng(Double.parseDouble(user.latitude), Double.parseDouble(user.longitude));
                                         if (prevValue == null){
                                             prevValue = mark;
                                             mMap.addMarker(new MarkerOptions().position(mark).title(transmitterID));
@@ -131,7 +133,7 @@ public class Receiver  extends FragmentActivity implements OnMapReadyCallback {
 
                                     }
                                    // placeHolder.setText("Latitude = " + latLong[0] + " Longitude = " + latLong[1]);
-                                    placeHolder.setText("Last updated at " + Calendar.getInstance().getTime());
+
                                 }catch(IndexOutOfBoundsException e){
                                     Toast.makeText(getApplicationContext(),"Failure in receiving Coordinates. Make sure the Beacon is broadcasting!",Toast.LENGTH_SHORT).show();
                                 }
