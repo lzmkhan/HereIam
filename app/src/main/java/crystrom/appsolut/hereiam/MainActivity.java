@@ -1,8 +1,10 @@
 package crystrom.appsolut.hereiam;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.app.Activity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.Button;
 
@@ -13,6 +15,8 @@ public class MainActivity extends Activity {
     Button beaconBtn;
     Button receiverBtn;
     Button settingsBtn;
+    RecyclerView mRecyclerView;
+    LinearLayoutManager mLayoutManager;
 
 
     @Override
@@ -70,8 +74,6 @@ public class MainActivity extends Activity {
 
 
 
-
-
     }
 
     @Override
@@ -87,4 +89,5 @@ public class MainActivity extends Activity {
 
 
     }
+
 }

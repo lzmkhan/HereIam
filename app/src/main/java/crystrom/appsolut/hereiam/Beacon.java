@@ -68,10 +68,10 @@ public class Beacon extends Activity implements GoogleApiClient.ConnectionCallba
         idText = (TextView)findViewById(R.id.idTextView);
         idText.setText("Fetching ID...");
 
-        Utilities util  = new Utilities();
-        util.setUpdateUIListener(new CustomListeners.updateUI() {
+        Utilities util = new Utilities(Utilities.BEACON_MODE);
+        util.SetOnSuccessIdGenerationCallBack(new CustomListeners.OnGeneratedIdConfirm() {
             @Override
-            public void updateUIElements(String id) {
+            public void OnSuccessfulIdGeneration(String id) {
                 idText.setText(id);
                 stopBCBtn.setEnabled(true);
                 ID = id;

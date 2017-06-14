@@ -2,8 +2,8 @@ package crystrom.appsolut.hereiam;
 
 import com.google.firebase.database.Exclude;
 
+import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by Marcus Khan on 4/15/2017.
@@ -17,31 +17,40 @@ public class RoomNode {
     private String ID;
     private String numberOfSlots;
     private String createdTime;
-    private Map<String, String> users = new HashMap<String, String>();
+    private HashMap<String, UserNodePlus> users = new HashMap<String, UserNodePlus>();
 
 
-    RoomNode(String id, String numberOfSlots, String createdTime) {
+    RoomNode(String id, String numberOfSlots) {
         this.ID = id;
         this.numberOfSlots = numberOfSlots;
-        this.createdTime = createdTime;
+        this.createdTime = Calendar.getInstance().getTime().toString();
     }
 
 
     /**
      * The user shall add user with this function before sending the room node to firebase
-     * id is the generated id
-     * and mode is the user's behaviour inside the database.
+     *
      * mode shall either be OBSERVE or BROADCAST
      * While in OBSERVE mode, the user can only observe and their location will not be
-     * shared. While in Broadcast, they can Observer and Broadcast their location and other
+     * shared. While in Broadcast, they can Observe and Broadcast their location and other
      * broadcasters's location.
      *
-     * @param id
-     * @param mode
+     * @param user is the UserNodePlus object which is the child of UserNode
      */
     @Exclude
-    public void addUpdateUser(String id, String mode) {
-        users.put(id, mode);
+    public void addUpdateUser(UserNodePlus user) {
+        users.put(user.userId, user);
+    }
+
+
+    @Exclude
+    public void removeUser(UserNodePlus user) {
+        users.remove(user.userId);
+    }
+
+    @Exclude
+    public UserNodePlus getUser(String userId) {
+        return users.get(userId);
     }
 
 
@@ -57,5 +66,18 @@ public class RoomNode {
             return CHECK_OK;
         }
 
+    }
+
+
+    private class UserNodePlus extends UserNode {
+        int mode;
+
+        UserNodePlus(String id, String latitude, String longitude, int mode) {
+            super.userId = id;
+            super.latitude = latitude;
+            super.longitude = longitude;
+            super.lastUpdated = Calendar.getInstance().getTime().toString();
+            this.mode = mode;
+        }
     }
 }

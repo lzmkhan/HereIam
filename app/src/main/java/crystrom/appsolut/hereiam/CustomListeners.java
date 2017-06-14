@@ -8,8 +8,9 @@ public class CustomListeners {
     public interface getRoomID {
         void onRoomIDObtained(String id);
     }
-    public interface updateUI{
-        void updateUIElements(String id);
+
+    public interface OnGeneratedIdConfirm {
+        void OnSuccessfulIdGeneration(String id);
         }
     }
 

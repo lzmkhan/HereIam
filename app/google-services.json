@@ -15,11 +15,19 @@
       },
       "oauth_client": [
         {
+          "client_id": "516925944584-9k2ernsf1t2nqcbtmsrhio46vp2v6r59.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "crystrom.appsolut.hereiam",
+            "certificate_hash": "d4c21e52df1c7b89570698c48d13bdd857098b22"
+          }
+        },
+        {
           "client_id": "516925944584-bt9gbq9q59kfhegrjfpvek4j2r6125e4.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "crystrom.appsolut.hereiam",
-            "certificate_hash": "EB8F003E19C46466D322D5CB063D13AA55E27FB5"
+            "certificate_hash": "eb8f003e19c46466d322d5cb063d13aa55e27fb5"
           }
         },
         {

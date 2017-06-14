@@ -17,15 +17,21 @@ import java.util.Random;
 public class Utilities implements ValueEventListener{
     public final static int ROOM_MODE = 1;
     public final static int BEACON_MODE = 2;
-    DataSnapshot currentData;
-    DatabaseReference dbRef1;
-    FirebaseDatabase firebaseReference = FirebaseDatabase.getInstance();
     int mode;
-    CustomListeners.updateUI updateUI;
+    private DataSnapshot currentData;
+    private DatabaseReference dbRef1;
+    private FirebaseDatabase firebaseReference = FirebaseDatabase.getInstance();
+    private CustomListeners.OnGeneratedIdConfirm OnGeneratedIdConfirm;
 
-    public Utilities(){
-        dbRef1 = firebaseReference.getReference("Users");
-        dbRef1.addListenerForSingleValueEvent(this);
+    public Utilities(int mode) {
+        this.mode = mode;
+        if (mode == ROOM_MODE) {
+            dbRef1 = firebaseReference.getReference("Rooms");
+            dbRef1.addListenerForSingleValueEvent(this);
+        } else {
+            dbRef1 = firebaseReference.getReference("Users");
+            dbRef1.addListenerForSingleValueEvent(this);
+        }
     }
 
     private static String giveAlphabet(int i) {
@@ -44,8 +50,8 @@ public class Utilities implements ValueEventListener{
         return output;
     }
 
-    public void setUpdateUIListener(CustomListeners.updateUI ui){
-        this.updateUI = ui;
+    public void SetOnSuccessIdGenerationCallBack(CustomListeners.OnGeneratedIdConfirm ui) {
+        this.OnGeneratedIdConfirm = ui;
     }
 
     @Override
@@ -53,7 +59,7 @@ public class Utilities implements ValueEventListener{
         currentData = dataSnapshot;
         Log.d("firebase","triggered");
         String id = generateID();
-        updateUI.updateUIElements(id);
+        OnGeneratedIdConfirm.OnSuccessfulIdGeneration(id);
 
     }
 
