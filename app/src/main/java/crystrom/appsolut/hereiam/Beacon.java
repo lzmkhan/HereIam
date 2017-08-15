@@ -39,8 +39,8 @@ import java.util.Calendar;
 
 
 public class Beacon extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener{
+    public static final int REQUEST_ACCESS_LOCATION = 1;
     private final int MODE_PRIVATE = 0;
-    private final int REQUEST_ACCESS_LOCATION = 1;
     TextView idText;
     String ID ="";
     Button sendIdBtn;

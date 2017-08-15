@@ -63,7 +63,7 @@
             fab:fab_colorNormal="#ffffff"
             fab:fab_colorPressed="#c0c0c0"
             fab:fab_colorRipple="#99d4d4d4"
-            fab:fab_label="Enter a Room"
+            fab:fab_label="Join Room"
             fab:fab_size="mini" />
 
         <com.github.clans.fab.FloatingActionButton
