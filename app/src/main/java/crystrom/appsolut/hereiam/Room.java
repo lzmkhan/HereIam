@@ -61,6 +61,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
     LocationManager manager;
     GoogleApiClient googleApi;
     UserNodePlus userNode;
+    ValueEventListener roomUsersListener;
 
 
     @Override
@@ -71,6 +72,16 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map1);
         mapFragment.getMapAsync(this);
 
+
+        // Initialize the location manager
+        manager = (LocationManager) getApplicationContext().getSystemService(LOCATION_SERVICE);
+
+        // Initialize the googleapi client
+        googleApi = new GoogleApiClient.Builder(getApplicationContext())
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
 
         txt1 = (TextView) findViewById(R.id.textView);
         txt1.setVisibility(View.INVISIBLE);
@@ -96,6 +107,11 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
                         startBroadcastBtn.setImageResource(R.drawable.ic_002_broadcast_lighted);
                         broadcastStarted = true;
 
+                        // TODO: broadcast logic should be implemented here
+                        // Update the CommMode to Broadcast(2)
+                        dbRefMain = fireDatabase.getReference("Rooms/" + mRoomID + "/users/" + mUserID + "/commMode");
+                        dbRefMain.setValue(RoomNode.BROADCAST);
+
                         int state = checkPermission("android.permission.ACCESS_FINE_LOCATION", Binder.getCallingPid(), Binder.getCallingUid());
                         if (state == PackageManager.PERMISSION_GRANTED) {//check for permission, if permission is granted check for location
 
@@ -108,11 +124,19 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
                         startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                     }
 
-                    // TODO: broadcast logic should be implemented here
-                    // Update the CommMode to Broadcast(2)
+
                 } else {
                     broadcastStarted = false;
                     startBroadcastBtn.setImageResource(R.drawable.ic_002_broadcast);
+                    // Update the CommMode to Observe(1)
+                    dbRefMain = fireDatabase.getReference("Rooms/" + mRoomID + "/users/" + mUserID + "/commMode");
+                    dbRefMain.setValue(RoomNode.OBSERVE);
+
+                    // Disconnect googleapi to stop updating location
+                    if (googleApi.isConnected() == true) {
+                        googleApi.disconnect();
+
+                    }
                 }
             }
         });
@@ -134,6 +158,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
                     //Exit a room
 
                     // Remove the listeners from the dbRefMain
+                    dbRefMain.removeEventListener(roomUsersListener);
                     dbRefMain = null;
 
 
@@ -316,6 +341,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
 
                                         // Setting up user listeners to update the google map with user's current locations.
                                         setupUserListeners();
+                                        startBroadcastBtn.setEnabled(true);
                                     }
                                 });
                             } else {
@@ -371,7 +397,7 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
         if (roomAvailable == true) {
 
             dbRefMain = fireDatabase.getReference("Rooms/" + mRoomID);
-            dbRefMain.addValueEventListener(new ValueEventListener() {
+            roomUsersListener = new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -424,7 +450,9 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
                 public void onCancelled(DatabaseError databaseError) {
 
                 }
-            });
+            };
+
+            dbRefMain.addValueEventListener(roomUsersListener);
 
 
         }
@@ -432,24 +460,28 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
 
     @Override
     public void onConnected(Bundle bundle) {
-        LocationRequest mLocationRequest = LocationRequest.create();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(delay); // Update location every  5 second
-        try {
-            LocationServices.FusedLocationApi.requestLocationUpdates(googleApi, mLocationRequest, this);
-            Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApi);
-            if (mLastLocation != null) {
-                String lat = String.valueOf(mLastLocation.getLatitude());
-                String lon = String.valueOf(mLastLocation.getLongitude());
-                Log.d("Location", "Latitude = " + lat + "Longitude" + lon);
-                userNode.updateLatLong(lat, lon, Calendar.getInstance().getTime().toString());
-                writeToFirebase(userNode);
 
+        if (broadcastStarted == true) {
+            LocationRequest mLocationRequest = LocationRequest.create();
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            mLocationRequest.setInterval(delay); // Update location every  5 second
+            try {
+                LocationServices.FusedLocationApi.requestLocationUpdates(googleApi, mLocationRequest, this);
+                Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApi);
+                if (mLastLocation != null) {
+                    String lat = String.valueOf(mLastLocation.getLatitude());
+                    String lon = String.valueOf(mLastLocation.getLongitude());
+                    Log.d("Location", "Latitude = " + lat + "Longitude" + lon);
+                    userNode.commMode = RoomNode.BROADCAST;
+                    userNode.updateLatLong(lat, lon, Calendar.getInstance().getTime().toString());
+                    writeToFirebase(userNode);
+
+                }
+            } catch (SecurityException e) {
+                Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
+            } catch (Exception e) {
+                Log.d("Error", "Error at onConnected(): " + e.toString());
             }
-        } catch (SecurityException e) {
-            Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            Log.d("Error", "Error at onConnected(): " + e.toString());
         }
     }
 
@@ -460,12 +492,14 @@ public class Room extends FragmentActivity implements OnMapReadyCallback, Custom
 
     @Override
     public void onLocationChanged(Location location) {
-        if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Log.d("Location", "Latitude = " + location.getLatitude() + " Longitude = " + location.getLongitude());
-            userNode.updateLatLong(String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude()), Calendar.getInstance().getTime().toString());
-            writeToFirebase(userNode);
-        } else {
-            Toast.makeText(getApplicationContext(), "GPS has been disabled!", Toast.LENGTH_SHORT).show();
+        if (broadcastStarted == true) {
+            if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                Log.d("Location", "Latitude = " + location.getLatitude() + " Longitude = " + location.getLongitude());
+                userNode.updateLatLong(String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude()), Calendar.getInstance().getTime().toString());
+                writeToFirebase(userNode);
+            } else {
+                Toast.makeText(getApplicationContext(), "GPS has been disabled!", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
